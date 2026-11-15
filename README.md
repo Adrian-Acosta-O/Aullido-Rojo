@@ -182,4 +182,62 @@ npm run build
 ```
 Los artefactos estáticos se compilarán en `FrontEnd/dist/`.
 
+## Publicar el FrontEnd en Azure usando el BackEnd local
+
+El sitio publicado en Azure no puede usar `http://localhost:4000`: para cada visitante,
+`localhost` apunta a su propio equipo. Para mantener el BackEnd en este computador,
+expón únicamente el puerto del API mediante un túnel HTTPS.
+
+### 1. Instalar y ejecutar Cloudflare Tunnel
+
+En Windows PowerShell:
+
+```powershell
+winget install Cloudflare.cloudflared
+cloudflared tunnel --url http://localhost:4000
+```
+
+El comando mostrará una URL temporal similar a:
+`https://random-name.trycloudflare.com`.
+Mantén esa ventana abierta; si se cierra, el BackEnd deja de ser accesible desde
+Internet. La URL temporal cambia al reiniciar el túnel.
+
+Comprueba el túnel desde cualquier navegador:
+
+```text
+https://random-name.trycloudflare.com/api/saludo
+```
+
+Debe responder con el estado `success`.
+
+### 2. Configurar la URL de API del FrontEnd
+
+El cliente ya lee `VITE_API_URL` desde el entorno de compilación. En el workflow de
+GitHub Actions que despliega la Static Web App, configura esta variable antes de
+ejecutar `npm run build`:
+
+```yaml
+env:
+  VITE_API_URL: https://random-name.trycloudflare.com/api
+```
+
+Después de cada cambio de URL del túnel hay que volver a ejecutar el despliegue de
+Azure. La URL pública de la aplicación seguirá siendo:
+`https://ashy-dune-0d195cd10.6.azurestaticapps.net`.
+
+### 3. Restringir CORS en el BackEnd
+
+En `BackEnd/.env`, configura el origen de Azure y el local:
+
+```env
+CORS_ORIGINS=https://ashy-dune-0d195cd10.6.azurestaticapps.net,http://localhost:5173
+```
+
+Reinicia el BackEnd después de cambiar el archivo `.env`.
+
+Esta alternativa sirve para demostraciones o pruebas mientras el computador y Docker
+estén encendidos. Para producción permanente, mueve el BackEnd y MySQL a un servicio
+de Azure (por ejemplo, App Service/Container Apps y una base de datos administrada);
+así no dependerás de que este equipo permanezca conectado.
+
 ---

@@ -12,8 +12,25 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const corsOrigins = (process.env.CORS_ORIGINS || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors());
+app.use(cors(
+  corsOrigins.includes('*')
+    ? undefined
+    : {
+        origin: (origin, callback) => {
+          if (!origin || corsOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+          }
+
+          callback(new Error(`Origen CORS no permitido: ${origin}`));
+        }
+      }
+));
 app.use(express.json());
 
 // Ruta principal de bienvenida
