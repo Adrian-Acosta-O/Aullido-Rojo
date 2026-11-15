@@ -4,13 +4,26 @@ const SERVER_BASE = (typeof import.meta !== 'undefined' && import.meta.env && im
   : 'http://localhost:4000/api';
 
 const API_BASE = `${SERVER_BASE}/mapa`;
+const NGROK_HEADERS = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD)
+  ? { 'ngrok-skip-browser-warning': 'true' }
+  : {};
+
+function apiFetch(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...NGROK_HEADERS,
+      ...(options.headers || {})
+    }
+  });
+}
 
 /**
  * Autentica credenciales contra la base de datos MySQL (Cuenta + Astronauta + InicioSesion)
  */
 export async function loginApi(identificador, password) {
   try {
-    const res = await fetch(`${SERVER_BASE}/auth/login`, {
+    const res = await apiFetch(`${SERVER_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identificador, password })
@@ -31,7 +44,7 @@ export async function loginApi(identificador, password) {
  */
 export async function guardarRutaBdApi(datosRuta) {
   try {
-    const res = await fetch(`${SERVER_BASE}/rutas/guardar`, {
+    const res = await apiFetch(`${SERVER_BASE}/rutas/guardar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datosRuta)
@@ -48,7 +61,7 @@ export async function guardarRutaBdApi(datosRuta) {
  */
 export async function fetchHistorialRutasApi() {
   try {
-    const res = await fetch(`${SERVER_BASE}/rutas/historial`);
+    const res = await apiFetch(`${SERVER_BASE}/rutas/historial`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (error) {
@@ -62,7 +75,7 @@ export async function fetchHistorialRutasApi() {
  */
 export async function fetchCapas() {
   try {
-    const res = await fetch(`${API_BASE}/capas`);
+    const res = await apiFetch(`${API_BASE}/capas`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return data.data;
@@ -77,7 +90,7 @@ export async function fetchCapas() {
  */
 export async function fetchLugares() {
   try {
-    const res = await fetch(`${API_BASE}/lugares`);
+    const res = await apiFetch(`${API_BASE}/lugares`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return data.data;
@@ -92,7 +105,7 @@ export async function fetchLugares() {
  */
 export async function fetchMisionesConfig() {
   try {
-    const res = await fetch(`${API_BASE}/misiones-config`);
+    const res = await apiFetch(`${API_BASE}/misiones-config`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (error) {
@@ -106,7 +119,7 @@ export async function fetchMisionesConfig() {
  */
 export async function calcularDistanciaApi(lat1, lon1, lat2, lon2) {
   try {
-    const res = await fetch(`${API_BASE}/calcular-distancia`, {
+    const res = await apiFetch(`${API_BASE}/calcular-distancia`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lat1, lon1, lat2, lon2 })
@@ -123,7 +136,7 @@ export async function calcularDistanciaApi(lat1, lon1, lat2, lon2) {
  */
 export async function planificarRutasApi(origenId, destinoId, perfilCarga, tieneEquipo, equiposSeleccionados) {
   try {
-    const res = await fetch(`${API_BASE}/planificar-rutas`, {
+    const res = await apiFetch(`${API_BASE}/planificar-rutas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -147,7 +160,7 @@ export async function planificarRutasApi(origenId, destinoId, perfilCarga, tiene
  */
 export async function resolverPuntoCercanoApi(punto) {
   try {
-    const res = await fetch(`${API_BASE}/resolver-punto`, {
+    const res = await apiFetch(`${API_BASE}/resolver-punto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ punto })
@@ -165,7 +178,7 @@ export async function resolverPuntoCercanoApi(punto) {
  */
 export async function muestrearDatosEspectralesApi(lat, lon, tramoActual = 1, totalTramos = 1, waypointCercano = 'Rover') {
   try {
-    const res = await fetch(`${API_BASE}/muestrear-espectral`, {
+    const res = await apiFetch(`${API_BASE}/muestrear-espectral`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
